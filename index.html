@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neal Fun - Juego de Simulación Mejorado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .progress-bar {
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #4CAF50;
+            transition: width 0.3s ease;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 10px;
+            animation: modalopen 0.5s;
+        }
+        
+        @keyframes modalopen {
+            from {opacity: 0; transform: translateY(-50px);}
+            to {opacity: 1; transform: translateY(0);}
+        }
+        
+        .soccer-field {
+            width: 100%;
+            height: 300px;
+            background-color: #4CAF50;
+            position: relative;
+            border: 2px solid white;
+            overflow: hidden;
+        }
+        
+        .player {
+            width: 30px;
+            height: 30px;
+            background-color: blue;
+            border-radius: 50%;
+            position: absolute;
+            transition: all 0.2s;
+        }
+        
+        .ball {
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border-radius: 50%;
+            position: absolute;
+            transition: all 0.2s;
+        }
+        
+        .goal {
+            width: 10px;
+            height: 80px;
+            background-color: white;
+            position: absolute;
+            top: 110px;
+        }
+        
+        .signature {
+            font-family: 'Brush Script MT', cursive;
+            color: #333;
+            transform: rotate(-10deg);
+            display: inline-block;
+            margin: 10px;
+            padding: 5px;
+            border: 1px dashed #999;
+            background-color: #f9f9f9;
+        }
+        
+        .item-card {
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .item-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+        
+        .active-item {
+            border: 3px solid #3B82F6;
+            box-shadow: 0 0 10px #3B82F6;
+        }
+
+        .ad-container {
+            position: relative;
+            width: 100%;
+            height: 100px;
+            background: linear-gradient(135deg, #ff9966, #ff5e62);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .ad-container::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                rgba(255,255,255,0.3) 0%,
+                rgba(255,255,255,0) 60%
+            );
+            transform: rotate(30deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: rotate(30deg) translate(-30%, -30%); }
+            100% { transform: rotate(30deg) translate(30%, 30%); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto px-4 py-8">
+        <header class="bg-blue-600 text-white rounded-lg shadow-lg p-6 mb-8">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold">Neal Fun</h1>
+                    <p class="text-blue-200">Juego de simulación de vida mejorado</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-xl font-bold">$<span id="money">10</span></div>
+                    <div class="text-sm">Edad: <span id="age">10</span> años</div>
+                    <div class="text-sm">Nivel: <span id="work-level">1</span></div>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Sección de estado del jugador -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4 text-blue-600 border-b pb-2">Tu Personaje</h2>
+                <div class="flex justify-center mb-4">
+                    <div class="w-24 h-24 bg-blue-200 rounded-full flex items-center justify-center text-4xl">
+                        <i class="fas fa-user text-blue-600"></i>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-medium">Felicidad</span>
+                            <span class="text-sm" id="happiness-value">50%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="happiness-bar" style="width: 50%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-medium">Salud</span>
+                            <span class="text-sm" id="health-value">100%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill bg-green-500" id="health-bar" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-1">
+                            <span class="text-sm font-medium">Tiempo</span>
+                            <span class="text-sm" id="time-value">1 año = 1.5 min</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4 bg-yellow-50 p-3 rounded border border-yellow-200">
+                    <p class="text-sm text-yellow-800" id="status-message">¡Bienvenido a tu nueva vida! Comienza con $10 y 10 años de edad.</p>
+                </div>
+            </div>
+
+            <!-- Sección de trabajo -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4 text-blue-600 border-b pb-2">Trabajos</h2>
+                <div class="space-y-4">
+                    <div class="bg-gray-50 p-4 rounded border border-gray-200">
+                        <h3 class="font-semibold">Nivel <span id="current-level">1</span></h3>
+                        <p class="text-sm text-gray-600 mb-2">Gana $<span id="current-earnings">10</span> cada vez que trabajas</p>
+                        <p class="text-xs text-gray-500 mb-2">Progreso: $<span id="level-progress">0</span>/200 para subir de nivel</p>
+                        <div class="progress-bar mb-2">
+                            <div class="progress-fill bg-blue-500" id="level-progress-bar" style="width: 0%"></div>
+                        </div>
+                        <button onclick="work()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm w-full">
+                            Trabajar <i class="fas fa-briefcase ml-1"></i>
+                        </button>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded border border-blue-200">
+                        <h3 class="font-semibold text-sm">Controles del Juego de Fútbol</h3>
+                        <ul class="text-xs mt-1 grid grid-cols-2 gap-1">
+                            <li><span class="font-bold">W</span>: Arriba</li>
+                            <li><span class="font-bold">A</span>: Izquierda</li>
+                            <li><span class="font-bold">S</span>: Abajo</li>
+                            <li><span class="font-bold">D</span>: Derecha</li>
+                            <li><span class="font-bold">O</span>: Chutar</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sección de códigos -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-bold mb-4 text-blue-600 border-b pb-2">Códigos de Productos</h2>
+                <div class="mb-4">
+                    <input type="text" id="code-input" placeholder="Ingresa un código (ej: CARACAS20)" class="w-full px-4 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button onclick="redeemCode()" class="mt-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded w-full">
+                        Canjear Código <i class="fas fa-gift ml-1"></i>
+                    </button>
+                </div>
+                <div class="bg-gray-50 p-3 rounded border border-gray-200">
+                    <h3 class="font-semibold mb-2">Códigos de ejemplo:</h3>
+                    <ul class="text-sm space-y-1">
+                        <li><span class="font-mono bg-gray-200 px-1 rounded">CARACAS20</span> - $20</li>
+                        <li><span class="font-mono bg-gray-200 px-1 rounded">FIFA70</span> - $70</li>
+                        <li><span class="font-mono bg-gray-200 px-1 rounded">IPHONE150</span> - iPhone último modelo</li>
+                        <li><span class="font-mono bg-gray-200 px-1 rounded">PS5200</span> - PlayStation 5</li>
+                        <li><span class="font-mono bg-gray-200 px-1 rounded">CASA5000</span> - Casa de lujo</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de anuncio -->
+        <div class="mt-6">
+            <div class="ad-container" onclick="watchAd()">
+                <div class="text-center p-4 z-10">
+                    <i class="fas fa-ad text-3xl mb-2"></i>
+                    <p class="text-lg">¡Mira un anuncio y gana $2!</p>
+                    <p class="text-sm">(Haz clic aquí)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de ídolos de fútbol -->
+        <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold mb-4 text-blue-600 border-b pb-2">Conoce a tus Ídolos de Fútbol</h2>
+            <p class="text-gray-600 mb-4">Cada encuentro cuesta $100. Podrás obtener su firma y una foto con ellos.</p>
+            
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                <div class="item-card bg-gray-50 rounded-lg overflow-hidden border border-gray-200 cursor-pointer hover:border-blue-300" onclick="meetPlayer('Messi')">
+                    <img src="https://img.a.transfermarkt.technology/portrait/big/28003-1671435885.jpg?lm=1" alt="Messi" class="w-full h-32 object-cover">
+                    <div class="p-2 text-center">
+                        <h3 class="font-semibold">Lionel Messi</h3>
+                        <p class="text-xs text-gray-500">Delantero</p>
+                    </div>
+                </div>
+                <div class="item-card bg-gray-50 rounded-lg overflow-hidden border border-gray-200 cursor-pointer hover:border-blue-300" onclick="meetPlayer('Ronaldo')">
+                    <img src="https://img.a.transfermarkt.technology/portrait/big/8198-1671435887.jpg?lm=1" alt="Cristiano Ronaldo" class="w-full h-32 object-cover">
+                    <div class="p-2 text-center">
+                        <h3 class="font-semibold">Cristiano Ronaldo</h3>
+                        <p class="text-xs text-gray-500">Delantero</p>
+                    </div>
+                </div>
+                <div class="item-card bg-gray-50 rounded-lg overflow-hidden border border-gray-200 cursor-pointer hover:border-blue-300" onclick="meetPlayer('Neymar')">
+                    <img src="https://img.a.transfermarkt.technology/portrait/big/68290-1671435888.jpg?lm=1" alt="Neymar" class="w-full h-32 object-cover">
+                    <div class="p-2 text-center">
+                        <h3 class="font-semibold">Neymar Jr</h3>
+                        <p class="text-xs text-gray-500">Delantero</p>
+                    </div>
+                </div>
+                <div class="item-card bg-gray-50 rounded-lg overflow-hidden border border-gray-200 cursor-pointer hover:border-blue-300" onclick="meetPlayer('Mbappé')">
+                    <img src="https://img.a.transfermarkt.technology/portrait/big/342229-1671435887.jpg?lm=1" alt="Mbappé" class="w-full h-32 object-cover">
+                    <div class="p-2 text-center">
+                        <h3 class="font-semibold">Kylian Mbappé</h3>
+                        <p class="text-xs text-gray-500">Delantero</p>
+                    </div>
+                </div>
+                <div class="item-card bg-gray-50 rounded-lg overflow-hidden border border-gray-200 cursor-pointer hover:border-blue-300" onclick="meetPlayer('Soteldo')">
+                    <img src="https://img.a.transfermarkt.technology/portrait/big/341463-1671435888.jpg?lm=1" alt="Soteldo" class="w-full h-32 object-cover">
+                    <div class="p-2 text-center">
+                        <h3 class="font-semibold">Yeferson Soteldo</h3>
+                        <p class="text-xs text-gray-500">Centrocampista</p>
+                    </div>
+                </div>
+                <div class="item-card bg-gray-50 rounded-lg overflow-hidden border border-gray-200 cursor-pointer hover:border-blue-300" onclick="meetPlayer('Yamal')">
+                    <img src="https://img.a.transfermarkt.technology/portrait/big/1145260-1695643503.jpg?lm=1" alt="Yamal" class="w-full h-32 object-cover">
+                    <div class="p-2 text-center">
+                        <h3 class="font-semibold">Lamine Yamal</h3>
+                        <p class="text-xs text-gray-500">Delantero</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de mini juego de fútbol -->
+        <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold mb-4 text-blue-600 border-b pb-2">Mini Juego de Fútbol</h2>
+            <p class="text-gray-600 mb-4">Gana $80 por cada partido ganado. Duración: 1 minuto.</p>
+            
+            <div class="soccer-field mb-4">
+                <div class="goal left-0"></div>
+                <div class="goal right-0"></div>
+                <div class="player" id="user-player" style="left: 50px; top: 135px;"></div>
+                <div class="player bg-red-500" id="opponent-player" style="left: 250px; top: 135px;"></div>
+                <div class="ball" id="soccer-ball" style="left: 150px; top: 145px;"></div>
+            </div>
+            
+            <div class="flex justify-between items-center">
+                <button onclick="startSoccerGame()" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded">
+                    Jugar Partido <i class="fas fa-play ml-1"></i>
+                </button>
+                <div class="flex items-center space-x-4">
+                    <div class="bg-blue-50 px-4 py-2 rounded border border-blue-200">
+                        Tiempo: <span id="game-timer">00:00</span>
+                    </div>
+                    <div class="bg-blue-50 px-4 py-2 rounded border border-blue-200">
+                        Victorias: <span id="wins">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de inventario -->
+        <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold mb-4 text-blue-600 border-b pb-2">Tu Inventario</h2>
+            
+            <div class="mb-6">
+                <h3 class="font-semibold mb-2 text-lg">Firmas de Jugadores</h3>
+                <div id="signatures-container" class="flex flex-wrap">
+                    <!-- Las firmas aparecerán aquí -->
+                </div>
+            </div>
+            
+            <div>
+                <h3 class="font-semibold mb-2 text-lg">Tus Objetos</h3>
+                <p class="text-sm text-gray-600 mb-3">Haz clic en un objeto para usarlo</p>
+                <div id="inventory-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    <!-- Los objetos aparecerán aquí -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tienda de objetos -->
+        <div class="mt-8 bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold mb-4 text-blue-600 border-b pb-2">Tienda</h2>
+            <p class="text-gray-600 mb-4">Compra objetos para mejorar tu vida.</p>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Objetos de tecnología -->
+                <div class="item-card bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+                    <img src="https://images.unsplash.com/photo-1601784551446-66c9e1e8ac44?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" alt="iPhone" class="w-full h-32 object-cover">
+                    <div class="p-3">
+                        <h3 class="font-semibold">iPhone 15 Pro Max</h3>
+                        <p class="text-sm text-gray-600 mb-2">El último modelo de Apple</p>
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-green-600">$1000</span>
+                            <button onclick="buyItem('iPhone 15 Pro Max', 1000, 'https://images.unsplash.com/photo-1601784551446-66c9e1e8ac44?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80', 'Aumenta tu felicidad en 20%')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                                Comprar <i class="fas fa-shopping-cart ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="item-card bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+                    <img src="https://images.unsplash.com/photo-1607853202273-797f1c22a38e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" alt="PlayStation 5" class="w-full h-32 object-cover">
+                    <div class="p-3">
+                        <h3 class="font-semibold">PlayStation 5</h3>
+                        <p class="text-sm text-gray-600 mb-2">Consola de última generación</p>
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-green-600">$500</span>
+                            <button onclick="buyItem('PlayStation 5', 500, 'https://images.unsplash.com/photo-1607853202273-797f1c22a38e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80', 'Aumenta tu felicidad en 15%')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                                Comprar <i class="fas fa-shopping-cart ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="item-card bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+                    <img src="https://images.unsplash.com/photo-1593642632823-8f785ba67e45?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" alt="PC Gaming" class="w-full h-32 object-cover">
+                    <div class="p-3">
+                        <h3 class="font-semibold">PC Gaming</h3>
+                        <p class="text-sm text-gray-600 mb-2">Equipo de alto rendimiento</p>
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-green-600">$1500</span>
+                            <button onclick="buyItem('PC Gaming', 1500, 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80', 'Aumenta tus ganancias en 10%')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                                Comprar <i class="fas fa-shopping-cart ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Objetos de lujo -->
+                <div class="item-card bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+                    <img src="https://images.unsplash.com/photo-1580587771525-78b9dba3b914?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" alt="Casa de lujo" class="w-full h-32 object-cover">
+                    <div class="p-3">
+                        <h3 class="font-semibold">Casa de Lujo</h3>
+                        <p class="text-sm text-gray-600 mb-2">Amplia residencia con todas las comodidades</p>
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-green-600">$5000</span>
+                            <button onclick="buyItem('Casa de Lujo', 5000, 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80', 'Aumenta tu salud en 30%')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                                Comprar <i class="fas fa-shopping-cart ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="item-card bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+                    <img src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" alt="Auto deportivo" class="w-full h-32 object-cover">
+                    <div class="p-3">
+                        <h3 class="font-semibold">Auto Deportivo</h3>
+                        <p class="text-sm text-gray-600 mb-2">Velocidad y estilo</p>
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-green-600">$3000</span>
+                            <button onclick="buyItem('Auto Deportivo', 3000, 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80', 'Aumenta tu felicidad en 25%')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                                Comprar <i class="fas fa-shopping-cart ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="item-card bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+                    <img src="https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" alt="Yate" class="w-full h-32 object-cover">
+                    <div class="p-3">
+                        <h3 class="font-semibold">Yate de Lujo</h3>
+                        <p class="text-sm text-gray-600 mb-2">Navega con estilo</p>
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-green-600">$10000</span>
+                            <button onclick="buyItem('Yate de Lujo', 10000, 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80', 'Aumenta tu felicidad en 40%')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                                Comprar <i class="fas fa-shopping-cart ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nuevos accesorios -->
+                <div class="item-card bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+                    <img src="https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" alt="Cámara" class="w-full h-32 object-cover">
+                    <div class="p-3">
+                        <h3 class="font-semibold">Cámara Profesional</h3>
+                        <p class="text-sm text-gray-600 mb-2">Captura momentos especiales</p>
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-green-600">$800</span>
+                            <button onclick="buyItem('Cámara Profesional', 800, 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80', 'Aumenta tu felicidad en 10%')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                                Comprar <i class="fas fa-shopping-cart ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="item-card bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+                    <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=c crop&w=500&q=80" alt="Zapatillas" class="w-full h-32 object-cover">
+                    <div class="p-3">
+                        <h3 class="font-semibold">Zapatillas Deportivas</h3>
+                        <p class="text-sm text-gray-600 mb-2">Para correr más rápido</p>
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-green-600">$250</span>
+                            <button onclick="buyItem('Zapatillas Deportivas', 250, 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80', 'Aumenta tu salud en 5%')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                                Comprar <i class="fas fa-shopping-cart ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="item-card bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
+                    <img src="https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" alt="Reloj" class="w-full h-32 object-cover">
+                    <div class="p-3">
+                        <h3 class="font-semibold">Reloj Inteligente</h3>
+                        <p class="text-sm text-gray-600 mb-2">Monitorea tu salud</p>
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-green-600">$350</span>
+                            <button onclick="buyItem('Reloj Inteligente', 350, 'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80', 'Aumenta tu salud en 8%')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">
+                                Comprar <i class="fas fa-shopping-cart ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para fotos con jugadores -->
+    <div id="player-modal" class="modal">
+        <div class="modal-content">
+            <span class="close float-right text-2xl cursor-pointer" onclick="closeModal('player-modal')">&times;</span>
+            <h2 class="text-xl font-bold mb-4" id="player-modal-title">Foto con <span id="player-name"></span></h2>
+            <div class="flex flex-col md:flex-row gap-6">
+                <div class="flex-1">
+                    <img id="player-photo" src="" alt="Jugador" class="w-full rounded-lg border border-gray-200">
+                    <p class="mt-2 text-gray-600">¡Ahora tienes una foto con <span id="player-name-text"></span>!</p>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-semibold mb-2">Firma obtenida:</h3>
+                    <div class="signature text-2xl" id="player-signature"></div>
+                    <div class="mt-4 bg-green-50 p-3 rounded border border-green-200">
+                        <p class="text-green-700">¡Tu felicidad ha aumentado por conocer a tu ídolo!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para resultados del juego de fútbol -->
+    <div id="soccer-result-modal" class="modal">
+        <div class="modal-content">
+            <span class="close float-right text-2xl cursor-pointer" onclick="closeModal('soccer-result-modal')">&times;</span>
+            <h2 class="text-xl font-bold mb-4" id="soccer-result-title">Resultado del Partido</h2>
+            <div class="text-center py-6">
+                <i id="soccer-result-icon" class="fas fa-trophy text-5xl mb-4 text-yellow-500"></i>
+                <p class="text-lg" id="soccer-result-message"></p>
+                <p class="mt-4 text-gray-600" id="soccer-money-earned"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para mensajes generales -->
+    <div id="message-modal" class="modal">
+        <div class="modal-content">
+            <span class="close float-right text-2xl cursor-pointer" onclick="closeModal('message-modal')">&times;</span>
+            <h2 class="text-xl font-bold mb-4" id="message-modal-title">Mensaje</h2>
+            <div class="py-4">
+                <p class="text-lg" id="message-modal-content"></p>
+            </div>
+            <button onclick="closeModal('message-modal')" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded float-right">
+                Aceptar
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal para anuncio -->
+    <div id="ad-modal" class="modal">
+        <div class="modal-content">
+            <span class="close float-right text-2xl cursor-pointer" onclick="closeModal('ad-modal')">&times;</span>
+            <h2 class="text-xl font-bold mb-4">Anuncio</h2>
+            <div class="text-center py-6">
+                <i class="fas fa-ad text-5xl mb-4 text-blue-500"></i>
+                <p class="text-lg">¡Gracias por ver nuestro anuncio!</p>
+                <p class="mt-4 text-gray-600">Has ganado $2 por tu tiempo.</p>
+                <div class="mt-6">
+                    <img src="https://images.unsplash.com/photo-1567443024551-f3e3a7d67d08?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80" alt="Anuncio" class="w-full h-48 object-cover rounded-lg">
+                </div>
+                <button onclick="closeAdModal()" class="mt-6 bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded">
+                    Continuar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables del juego
+        let money = 10;
+        let age = 10;
+        let happiness = 50;
+        let health = 100;
+        let soccerWins = 0;
+        let signatures = [];
+        let inventory = [];
+        let gameInterval;
+        let yearInterval;
+        let isSoccerGameRunning = false;
+        let soccerGameInterval;
+        let ballDirection = { x: 1, y: 1 };
+        let playerPosition = { x: 50, y: 135 };
+        let opponentPosition = { x: 250, y: 135 };
+        let ballPosition = { x: 150, y: 145 };
+        let playerScore = 0;
+        let opponentScore = 0;
+        let gameTime = 0;
+        let maxGameTime = 60; // 60 segundos (1 minuto) por partido
+        let isPlayerAlive = true;
+        let workLevel = 1;
+        let levelProgress = 0;
+        let earningsMultiplier = 1;
+        let hasBall = false;
+        let activeItem = null;
+        let keyState = {};
+        let gameTimerInterval;
+
+        // Códigos válidos
+        const validCodes = {
+            'CARACAS20': { type: 'money', amount: 20 },
+            'FIFA70': { type: 'money', amount: 70 },
+            'IPHONE150': { type: 'item', name: 'iPhone 15 Pro Max', price: 1000, image: 'https://images.unsplash.com/photo-1601784551446-66c9e1e8ac44?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80', effect: 'Aumenta tu felicidad en 20%' },
+            'PS5200': { type: 'item', name: 'PlayStation 5', price: 500, image: 'https://images.unsplash.com/photo-1607853202273-797f1c22a38e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80', effect: 'Aumenta tu felicidad en 15%' },
+            'CASA5000': { type: 'item', name: 'Casa de Lujo', price: 5000, image: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80', effect: 'Aumenta tu salud en 30%' },
+            'PCGAMER1500': { type: 'item', name: 'PC Gaming', price: 1500, image: 'https://images.unsplash.com/photo-1593642632823-8f785ba67e45?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80', effect: 'Aumenta tus ganancias en 10%' },
+            'AUTO3000': { type: 'item', name: 'Auto Deportivo', price: 3000, image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80', effect: 'Aumenta tu felicidad en 25%' },
+            'YATE10000': { type: 'item', name: 'Yate de Lujo', price: 10000, image: 'https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80', effect: 'Aumenta tu felicidad en 40%' }
+        };
+
+        // Firmas de jugadores
+        const playerSignatures = {
+            'Messi': 'Leo Messi',
+            'Ronaldo': 'CR7',
+            'Neymar': 'Ney Jr',
+            'Mbappé': 'KMbappé',
+            'Soteldo': 'Y. Soteldo',
+            'Yamal': 'L. Yamal'
+        };
+
+        // Fotos de jugadores
+        const playerPhotos = {
+            'Messi': 'https://img.a.transfermarkt.technology/portrait/big/28003-1671435885.jpg?lm=1',
+            'Ronaldo': 'https://img.a.transfermarkt.technology/portrait/big/8198-1671435887.jpg?lm=1',
+            'Neymar': 'https://img.a.transfermarkt.technology/portrait/big/68290-1671435888.jpg?lm=1',
+            'Mbappé': 'https://img.a.transfermarkt.technology/portrait/big/342229-1671435887.jpg?lm=1',
+            'Soteldo': 'https://img.a.transfermarkt.technology/portrait/big/341463-1671435888.jpg?lm=1',
+            'Yamal': 'https://img.a.transfermarkt.technology/portrait/big/1145260-1695643503.jpg?lm=1'
+        };
+
+        // Efectos de los objetos
+        const itemEffects = {
+            'iPhone 15 Pro Max': () => { happiness = Math.min(100, happiness + 20); },
+            'PlayStation 5': () => { happiness = Math.min(100, happiness + 15); },
+            'Casa de Lujo': () => { health = Math.min(100, health + 30); },
+            'PC Gaming': () => { earningsMultiplier = 1.1; },
+            'Auto Deportivo': () => { happiness = Math.min(100, happiness + 25); },
+            'Yate de Lujo': () => { happiness = Math.min(100, happiness + 40); },
+            'Cámara Profesional': () => { happiness = Math.min(100, happiness + 10); },
+            'Zapatillas Deportivas': () => { health = Math.min(100, health + 5); },
+            'Reloj Inteligente': () => { health = Math.min(100, health + 8); }
+        };
+
+        // Inicializar el juego
+        function initGame() {
+            updateUI();
+            startYearTimer();
+            
+            // Configurar listeners de teclado
+            document.addEventListener('keydown', (e) => {
+                keyState[e.key] = true;
+                
+                // Tecla O para chutar
+                if (e.key === 'o' && isSoccerGameRunning && hasBall) {
+                    shootBall();
+                }
+            });
+            
+            document.addEventListener('keyup', (e) => {
+                keyState[e.key] = false;
+            });
+        }
+
+        // Actualizar la interfaz de usuario
+        function updateUI() {
+            document.getElementById('money').textContent = money;
+            document.getElementById('age').textContent = age;
+            document.getElementById('happiness-value').textContent = happiness + '%';
+            document.getElementById('happiness-bar').style.width = happiness + '%';
+            document.getElementById('health-value').textContent = health + '%';
+            document.getElementById('health-bar').style.width = health + '%';
+            document.getElementById('wins').textContent = soccerWins;
+            document.getElementById('work-level').textContent = workLevel;
+            document.getElementById('current-level').textContent = workLevel;
+            document.getElementById('current-earnings').textContent = getCurrentEarnings();
+            document.getElementById('level-progress').textContent = levelProgress;
+            document.getElementById('level-progress-bar').style.width = (levelProgress / 200 * 100) + '%';
+            
+            // Actualizar firmas
+            const signaturesContainer = document.getElementById('signatures-container');
+            signaturesContainer.innerHTML = '';
+            signatures.forEach(sig => {
+                const signatureDiv = document.createElement('div');
+                signatureDiv.className = 'signature';
+                signatureDiv.textContent = sig;
+                signaturesContainer.appendChild(signatureDiv);
+            });
+            
+            // Actualizar inventario
+            const inventoryContainer = document.getElementById('inventory-container');
+            inventoryContainer.innerHTML = '';
+            inventory.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = `item-card bg-gray-50 rounded-lg overflow-hidden border border-gray-200 fade-in ${activeItem === index ? 'active-item' : ''}`;
+                itemDiv.innerHTML = `
+                    <img src="${item.image}" alt="${item.name}" class="w-full h-32 object-cover">
+                    <div class="p-2 text-center">
+                        <h3 class="font-semibold">${item.name}</h3>
+                        ${item.effect ? `<p class="text-xs text-gray-500">${item.effect}</p>` : ''}
+                    </div>
+                `;
+                itemDiv.onclick = () => useItem(index);
+                inventoryContainer.appendChild(itemDiv);
+            });
+        }
+
+        // Obtener ganancias actuales según el nivel
+        function getCurrentEarnings() {
+            let baseEarnings = 0;
+            switch(workLevel) {
+                case 1: baseEarnings = 10; break;
+                case 2: baseEarnings = 15; break;
+                case 3: baseEarnings = 20; break;
+            }
+            return Math.floor(baseEarnings * earningsMultiplier);
+        }
+
+        // Trabajar para ganar dinero
+        function work() {
+            const earnings = getCurrentEarnings();
+            
+            money += earnings;
+            levelProgress += earnings;
+            happiness = Math.min(100, happiness + 5);
+            
+            // Subir de nivel si se alcanzan 200 en progreso
+            if (levelProgress >= 200 && workLevel < 3) {
+                workLevel++;
+                levelProgress = 0;
+                showMessage('¡Subiste de nivel!', `Ahora estás en nivel ${workLevel} y ganas $${getCurrentEarnings()} por trabajo.`);
+            }
+            
+            updateUI();
+            
+            document.getElementById('status-message').textContent = `¡Has ganado $${earnings} trabajando en nivel ${workLevel}!`;
+            document.getElementById('status-message').classList.remove('bg-red-50', 'border-red-200', 'text-red-800');
+            document.getElementById('status-message').classList.add('bg-green-50', 'border-green-200', 'text-green-800');
+            
+            setTimeout(() => {
+                document.getElementById('status-message').classList.remove('bg-green-50', 'border-green-200', 'text-green-800');
+                document.getElementById('status-message').classList.add('bg-yellow-50', 'border-yellow-200', 'text-yellow-800');
+                document.getElementById('status-message').textContent = 'Sigue trabajando o explorando otras opciones.';
+            }, 3000);
+        }
+
+        // Canjear código
+        function redeemCode() {
+            const codeInput = document.getElementById('code-input');
+            const code = codeInput.value.trim().toUpperCase();
+            
+            if (!code) {
+                showMessage('Error', 'Por favor ingresa un código.');
+                return;
+            }
+            
+            if (validCodes[code]) {
+                const reward = validCodes[code];
+                
+                if (reward.type === 'money') {
+                    money += reward.amount;
+                    showMessage('¡Código válido!', `Has recibido $${reward.amount}.`);
+                } else if (reward.type === 'item') {
+                    inventory.push({
+                        name: reward.name,
+                        image: reward.image,
+                        effect: reward.effect
+                    });
+                    showMessage('¡Código válido!', `Has recibido: ${reward.name}.`);
+                }
+                
+                codeInput.value = '';
+            } else {
+                showMessage('Código inválido', 'El código que ingresaste no es válido.');
+            }
+            
+            updateUI();
+        }
+
+        // Usar un objeto del inventario
+        function useItem(index) {
+            if (index < 0 || index >= inventory.length) return;
+            
+            const item = inventory[index];
+            
+            // Aplicar efecto del objeto
+            if (itemEffects[item.name]) {
+                itemEffects[item.name]();
+                
+                // Marcar como activo
+                activeItem = index;
+                
+                showMessage('Objeto usado', `Has usado ${item.name}. ${item.effect}`);
+                updateUI();
+            }
+        }
+
+        // Conocer a un jugador de fútbol
+        function meetPlayer(player) {
+            if (money < 100) {
+                showMessage('Dinero insuficiente', 'Necesitas $100 para conocer a un jugador.');
+                return;
+            }
+            
+            money -= 100;
+            happiness = Math.min(100, happiness + 15);
+            
+            if (!signatures.includes(playerSignatures[player])) {
+                signatures.push(playerSignatures[player]);
+            }
+            
+            updateUI();
+            
+            // Mostrar modal con foto y firma
+            document.getElementById('player-name').textContent = player;
+            document.getElementById('player-name-text').textContent = player;
+            document.getElementById('player-photo').src = playerPhotos[player];
+            document.getElementById('player-signature').textContent = playerSignatures[player];
+            
+            openModal('player-modal');
+        }
+
+        // Juego de fútbol
+        function startSoccerGame() {
+            if (isSoccerGameRunning) return;
+            
+            isSoccerGameRunning = true;
+            playerScore = 0;
+            opponentScore = 0;
+            gameTime = 0;
+            hasBall = false;
+            
+            // Posiciones iniciales
+            playerPosition = { x: 50, y: 135 };
+            opponentPosition = { x: 250, y: 135 };
+            ballPosition = { x: 150, y: 145 };
+            ballDirection = { x: Math.random() > 0.5 ? 1 : -1, y: Math.random() > 0.5 ? 1 : -1 };
+            
+            // Iniciar temporizador
+            updateGameTimer();
+            gameTimerInterval = setInterval(updateGameTimer, 1000);
+            
+            updateSoccerUI();
+            soccerGameInterval = setInterval(updateSoccerGame, 100);
+        }
+
+        function updateGameTimer() {
+            gameTime++;
+            const seconds = maxGameTime - gameTime;
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            
+            document.getElementById('game-timer').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+            
+            if (gameTime >= maxGameTime) {
+                endSoccerGame();
+            }
+        }
+
+        function updateSoccerGame() {
+            // Mover al jugador con WASD
+            const speed = 5;
+            
+            if (keyState['w'] || keyState['W']) {
+                playerPosition.y = Math.max(20, playerPosition.y - speed);
+            }
+            if (keyState['s'] || keyState['S']) {
+                playerPosition.y = Math.min(260, playerPosition.y + speed);
+            }
+            if (keyState['a'] || keyState['A']) {
+                playerPosition.x = Math.max(20, playerPosition.x - speed);
+            }
+            if (keyState['d'] || keyState['D']) {
+                playerPosition.x = Math.min(280, playerPosition.x + speed);
+            }
+            
+            // Mover la pelota si no está pegada al jugador
+            if (!hasBall) {
+                ballPosition.x += ballDirection.x * 3;
+                ballPosition.y += ballDirection.y * 2;
+                
+                // Rebotes en los bordes
+                if (ballPosition.y <= 10 || ballPosition.y >= 290) {
+                    ballDirection.y *= -1;
+                }
+                
+                // Gol del jugador (derecha)
+                if (ballPosition.x >= 290 && ballPosition.y >= 110 && ballPosition.y <= 190) {
+                    playerScore++;
+                    resetBall();
+                }
+                
+                // Gol del oponente (izquierda)
+                if (ballPosition.x <= 10 && ballPosition.y >= 110 && ballPosition.y <= 190) {
+                    opponentScore++;
+                    resetBall();
+                }
+                
+                // Colisión con el jugador (atrapar la pelota)
+                if (Math.abs(ballPosition.x - playerPosition.x) < 25 && Math.abs(ballPosition.y - playerPosition.y) < 25) {
+                    hasBall = true;
+                }
+                
+                // Colisión con el oponente (IA simple)
+                if (Math.abs(ballPosition.x - opponentPosition.x) < 25 && Math.abs(ballPosition.y - opponentPosition.y) < 25) {
+                    ballDirection.x = -1;
+                    ballDirection.y = (ballPosition.y - opponentPosition.y) / 20;
+                }
+            } else {
+                // La pelota sigue al jugador
+                ballPosition.x = playerPosition.x + 15;
+                ballPosition.y = playerPosition.y;
+            }
+            
+            // Mover oponente (IA simple)
+            if (!hasBall) {
+                if (ballPosition.x > 150) {
+                    if (opponentPosition.y < ballPosition.y) {
+                        opponentPosition.y += 2;
+                    } else {
+                        opponentPosition.y -= 2;
+                    }
+                } else {
+                    // Volver a posición central
+                    if (opponentPosition.y < 135) {
+                        opponentPosition.y += 1;
+                    } else if (opponentPosition.y > 135) {
+                        opponentPosition.y -= 1;
+                    }
+                }
+            } else {
+                // Perseguir al jugador si tiene la pelota
+                if (opponentPosition.y < playerPosition.y) {
+                    opponentPosition.y += 3;
+                } else {
+                    opponentPosition.y -= 3;
+                }
+                
+                // Moverse hacia el jugador
+                if (opponentPosition.x < playerPosition.x) {
+                    opponentPosition.x += 2;
+                }
+            }
+            
+            updateSoccerUI();
+        }
+
+        // Chutar la pelota
+        function shootBall() {
+            if (!hasBall) return;
+            
+            hasBall = false;
+            
+            // Dirección hacia la portería contraria
+            ballDirection.x = 1;
+            ballDirection.y = (Math.random() * 2 - 1) * 0.5; // Pequeño ángulo aleatorio
+            
+            // Posición inicial del disparo
+            ballPosition.x = playerPosition.x + 20;
+            ballPosition.y = playerPosition.y;
+        }
+
+        function resetBall() {
+            ballPosition = { x: 150, y: 145 };
+            ballDirection = { x: Math.random() > 0.5 ? 1 : -1, y: Math.random() > 0.5 ? 1 : -1 };
+            hasBall = false;
+        }
+
+        function endSoccerGame() {
+            clearInterval(soccerGameInterval);
+            clearInterval(gameTimerInterval);
+            isSoccerGameRunning = false;
+            
+            let resultMessage = '';
+            let resultTitle = '';
+            let resultIcon = 'fa-trophy';
+            let moneyEarned = 0;
+            
+            if (playerScore > opponentScore) {
+                soccerWins++;
+                moneyEarned = 80;
+                money += moneyEarned;
+                happiness = Math.min(100, happiness + 10);
+                resultTitle = '¡Victoria!';
+                resultMessage = `Has ganado el partido ${playerScore}-${opponentScore}.`;
+            } else if (playerScore < opponentScore) {
+                resultTitle = 'Derrota';
+                resultMessage = `Has perdido el partido ${playerScore}-${opponentScore}.`;
+                resultIcon = 'fa-sad-tear';
+            } else {
+                resultTitle = 'Empate';
+                resultMessage = `El partido terminó ${playerScore}-${opponentScore}.`;
+                resultIcon = 'fa-handshake';
+            }
+            
+            updateUI();
+            
+            document.getElementById('soccer-result-title').textContent = resultTitle;
+            document.getElementById('soccer-result-message').textContent = resultMessage;
+            document.getElementById('soccer-result-icon').className = `fas ${resultIcon} text-5xl mb-4 ${playerScore > opponentScore ? 'text-yellow-500' : 'text-gray-500'}`;
+            
+            if (moneyEarned > 0) {
+                document.getElementById('soccer-money-earned').textContent = `Has ganado $${moneyEarned}.`;
+            } else {
+                document.getElementById('soccer-money-earned').textContent = 'Inténtalo de nuevo para ganar $80.';
+            }
+            
+            openModal('soccer-result-modal');
+        }
+
+        function updateSoccerUI() {
+            document.getElementById('user-player').style.left = playerPosition.x + 'px';
+            document.getElementById('user-player').style.top = playerPosition.y + 'px';
+            
+            document.getElementById('opponent-player').style.left = opponentPosition.x + 'px';
+            document.getElementById('opponent-player').style.top = opponentPosition.y + 'px';
+            
+            document.getElementById('soccer-ball').style.left = ballPosition.x + 'px';
+            document.getElementById('soccer-ball').style.top = ballPosition.y + 'px';
+        }
+
+        // Comprar objetos
+        function buyItem(name, price, image, effect) {
+            if (money < price) {
+                showMessage('Dinero insuficiente', `No tienes suficiente dinero para comprar ${name}.`);
+                return;
+            }
+            
+            money -= price;
+            inventory.push({ name, image, effect });
+            happiness = Math.min(100, happiness + 5);
+            
+            updateUI();
+            showMessage('Compra exitosa', `Has comprado: ${name}.`);
+        }
+
+        // Ver anuncio
+        function watchAd() {
+            openModal('ad-modal');
+        }
+
+        function closeAdModal() {
+            closeModal('ad-modal');
+            money += 2;
+            updateUI();
+            showMessage('¡Gracias!', 'Has ganado $2 por ver el anuncio.');
+        }
+
+        // Temporizador de años
+        function startYearTimer() {
+            // Cada 90 segundos (1.5 minutos) es un año
+            yearInterval = setInterval(() => {
+                if (!isPlayerAlive) return;
+                
+                age++;
+                
+                // Los jugadores pueden morir a partir de los 96 años
+                if (age >= 96 && Math.random() < 0.3) {
+                    isPlayerAlive = false;
+                    clearInterval(yearInterval);
+                    document.getElementById('status-message').textContent = '¡Has fallecido! Tu personaje ha llegado al final de su vida.';
+                    document.getElementById('status-message').classList.remove('bg-yellow-50', 'border-yellow-200', 'text-yellow-800');
+                    document.getElementById('status-message').classList.add('bg-red-50', 'border-red-200', 'text-red-800');
+                    showMessage('Fin del juego', 'Tu personaje ha fallecido. ¡Gracias por jugar!');
+                }
+                
+                // Cada año disminuye un poco la salud y felicidad
+                health = Math.max(0, health - 1);
+                happiness = Math.max(0, happiness - 2);
+                
+                // Si la salud llega a 0, el jugador muere
+                if (health <= 0) {
+                    isPlayerAlive = false;
+                    clearInterval(yearInterval);
+                    document.getElementById('status-message').textContent = '¡Has fallecido por problemas de salud!';
+                    document.getElementById('status-message').classList.remove('bg-yellow-50', 'border-yellow-200', 'text-yellow-800');
+                    document.getElementById('status-message').classList.add('bg-red-50', 'border-red-200', 'text-red-800');
+                    showMessage('Fin del juego', 'Tu personaje ha fallecido por problemas de salud. ¡Cuida mejor tu salud la próxima vez!');
+                }
+                
+                updateUI();
+                
+                if (isPlayerAlive) {
+                    document.getElementById('status-message').textContent = `¡Feliz cumpleaños! Ahora tienes ${age} años.`;
+                    document.getElementById('status-message').classList.remove('bg-red-50', 'border-red-200', 'text-red-800');
+                    document.getElementById('status-message').classList.add('bg-green-50', 'border-green-200', 'text-green-800');
+                    
+                    setTimeout(() => {
+                        document.getElementById('status-message').classList.remove('bg-green-50', 'border-green-200', 'text-green-800');
+                        document.getElementById('status-message').classList.add('bg-yellow-50', 'border-yellow-200', 'text-yellow-800');
+                        document.getElementById('status-message').textContent = 'Sigue trabajando o explorando otras opciones.';
+                    }, 3000);
+                }
+            }, 90000); // 90 segundos = 1.5 minutos
+        }
+
+        // Funciones para modales
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'block';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function showMessage(title, content) {
+            document.getElementById('message-modal-title').textContent = title;
+            document.getElementById('message-modal-content').textContent = content;
+            openModal('message-modal');
+        }
+
+        // Iniciar el juego cuando se carga la página
+        window.onload = initGame;
+    </script>
+</body>
+</html>
